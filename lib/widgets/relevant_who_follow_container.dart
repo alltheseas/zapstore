@@ -73,7 +73,7 @@ class RelevantWhoFollowContainer extends HookConsumerWidget {
       query<Zap>(
         tags: app.event.addressableIdTagMap,
         source: const LocalSource(),
-        and: (zap) => {zap.author, zap.zapRequest},
+        and: (zap) => {zap.author.query(), zap.zapRequest.query()},
         subscriptionPrefix: 'trust-zaps',
       ),
     );
@@ -87,7 +87,7 @@ class RelevantWhoFollowContainer extends HookConsumerWidget {
                 '#e': {latestMetadata.id},
               },
               source: const LocalSource(),
-              and: (zap) => {zap.author, zap.zapRequest},
+              and: (zap) => {zap.author.query(), zap.zapRequest.query()},
               subscriptionPrefix: 'trust-metadata-zaps',
             ),
           )
@@ -373,9 +373,10 @@ final relevantWhoFollowProvider = FutureProvider.autoDispose
       if (response is VerifyReputationResponse) {
         // Fetch corresponding profiles for the returned pubkeys
         final storage = ref.read(storageNotifierProvider.notifier);
-        final profiles = await storage.query(
-          Request<Profile>([RequestFilter<Profile>(authors: response.pubkeys)]),
+        final profiles = await storage.query<Profile>(
+          Request([RequestFilter(authors: response.pubkeys)]),
           source: const LocalAndRemoteSource(relays: 'social', stream: false),
+          subscriptionPrefix: 'verify-reputation-profiles',
         );
         return profiles;
       }

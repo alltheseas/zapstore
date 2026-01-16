@@ -66,6 +66,11 @@ class CategorizedAppsNotifier extends Notifier<CategorizedApps> {
     final installedPackages = pmState.installed.values.toList();
     final installedIds = pmState.installed.keys.toSet();
 
+    // Show loading while scanning for installed packages
+    if (pmState.isScanning && installedIds.isEmpty) {
+      return CategorizedApps.empty;
+    }
+
     if (installedIds.isEmpty) {
       _hasLoadedOnce = true;
       return const CategorizedApps(
@@ -87,15 +92,18 @@ class CategorizedAppsNotifier extends Notifier<CategorizedApps> {
           '#f': {platform},
         },
         and: (app) => {
-          app.latestRelease,
-          app.latestRelease.value?.latestMetadata,
-          app.latestRelease.value?.latestAsset,
+          app.latestRelease.query(
+            source: const LocalAndRemoteSource(
+              relays: 'AppCatalog',
+              stream: false,
+            ),
+            and: (release) => {
+              release.latestMetadata.query(),
+              release.latestAsset.query(),
+            },
+          ),
         },
         source: const LocalAndRemoteSource(relays: 'AppCatalog', stream: true),
-        andSource: const LocalAndRemoteSource(
-          relays: 'AppCatalog',
-          stream: false,
-        ),
         subscriptionPrefix: 'updates',
       ),
     );
@@ -126,7 +134,9 @@ class CategorizedAppsNotifier extends Notifier<CategorizedApps> {
     final catalogedAppIds = apps.map((a) => a.identifier).toSet();
 
     // Only process apps that are actually installed (check against our map)
-    final installedApps = apps.where((a) => installedMap.containsKey(a.identifier));
+    final installedApps = apps.where(
+      (a) => installedMap.containsKey(a.identifier),
+    );
 
     for (final app in installedApps) {
       final pkg = installedMap[app.identifier]!;
@@ -148,12 +158,15 @@ class CategorizedAppsNotifier extends Notifier<CategorizedApps> {
     }
 
     // Find installed packages without catalog metadata
-    final uncatalogedApps = installedPackages
-        .where((pkg) => !catalogedAppIds.contains(pkg.appId))
-        .toList()
-      ..sort((a, b) => (a.name ?? a.appId)
-          .toLowerCase()
-          .compareTo((b.name ?? b.appId).toLowerCase()));
+    final uncatalogedApps =
+        installedPackages
+            .where((pkg) => !catalogedAppIds.contains(pkg.appId))
+            .toList()
+          ..sort(
+            (a, b) => (a.name ?? a.appId).toLowerCase().compareTo(
+              (b.name ?? b.appId).toLowerCase(),
+            ),
+          );
 
     int byName(App a, App b) => (a.name ?? a.identifier)
         .toLowerCase()
@@ -194,6 +207,7 @@ class CategorizedAppsNotifier extends Notifier<CategorizedApps> {
           cachedFor: Duration(hours: 2),
           stream: false,
         ),
+        subscriptionPrefix: 'updates-profiles',
       ),
     );
   }

@@ -1,8 +1,8 @@
 name: zapstore
-description: The open app store powered by your social network
+description: Zapstore mobile app
 publish_to: none
 
-version: 1.0.0-rc1+1000
+version: 1.0.0-rc2+1001
 
 environment:
   sdk: ^3.8.1
@@ -61,12 +61,12 @@ dependency_overrides:
     # path: ../../purplebase/models
     git:
       url: https://github.com/purplebase/models
-      ref: ca70b39
+      ref: 474d046
   purplebase:
     # path: ../../purplebase/purplebase
     git:
       url: https://github.com/purplebase/purplebase
-      ref: "6052022"
+      ref: 6881dfe
   amber_signer:
     # path: ../amber_signer
     git:

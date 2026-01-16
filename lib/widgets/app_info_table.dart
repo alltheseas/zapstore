@@ -75,6 +75,18 @@ class AppInfoTable extends HookConsumerWidget {
 
     rows.add(_InfoRow(label: 'App ID', value: app.identifier));
 
+    if (!app.isRelaySigned) {
+      // Author npub
+      final npub = Utils.encodeShareableFromString(app.pubkey, type: 'npub');
+      rows.add(
+        _InfoRow(
+          label: 'Author npub',
+          value: npub.abbreviate(),
+          copyValue: npub,
+        ),
+      );
+    }
+
     if (fileMetadata?.hash != null) {
       final full = fileMetadata!.hash;
       rows.add(
@@ -91,6 +103,12 @@ class AppInfoTable extends HookConsumerWidget {
           copyValue: full,
         ),
       );
+    }
+
+    if (fileMetadata?.size != null) {
+      final sizeInBytes = fileMetadata!.size!;
+      final sizeInMB = (sizeInBytes / (1024 * 1024)).toStringAsFixed(2);
+      rows.add(_InfoRow(label: 'Size', value: '$sizeInMB MB'));
     }
 
     if (fileMetadata?.versionCode != null) {
